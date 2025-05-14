@@ -1,10 +1,5 @@
-const cmp = (a, b) => {
-	return a.cost - b.cost
-}
-
-const Item = (row, col, dir, cost) => {
-	return { row, col, dir, cost }
-}
+const cmp = (a, b) => a.cost - b.cost
+const Item = (row, col, dir, cost) => ({ row, col, dir, cost })
 
 const bubble_up = (h, i) => {
 	const item = h[i]
@@ -58,31 +53,24 @@ const input = require('fs')
 	.filter((l) => l)
 	.map((l) => l.split(''))
 
-const rows = input.length
-const cols = input[0].length
-
-const UP = 0
-const RIGHT = 1
-const DOWN = 2
-const LEFT = 3
-const START = 'S'
-const END = 'E'
-const WALL = '#'
-
-const costMap = {}
+const rows = input.length,
+	cols = input[0].length,
+	UP = 0,
+	RIGHT = 1,
+	DOWN = 2,
+	LEFT = 3,
+	START = 'S',
+	END = 'E',
+	WALL = '#',
+	costMap = {}
 
 const calcTurningCost = (dir1, dir2) => {
 	const diff = Math.abs(dir1 - dir2)
 	return (diff === 3 ? 1 : diff) * 1000
 }
 
-const stateKey = (row, col, dir) => {
-	return (row * cols + col) * 4 + dir
-}
-
-const costFor = (stateKey) => {
-	return costMap[stateKey] ?? Infinity
-}
+const stateKey = (row, col, dir) => (row * cols + col) * 4 + dir
+const costFor = (stateKey) => costMap[stateKey] ?? Infinity
 
 const findStartEnd = () => {
 	let start = null,
