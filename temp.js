@@ -48,8 +48,10 @@ const heap_pop = (h) => {
 	return item
 }
 
+const inputName = process.argv[2] ?? './input.txt'
+
 const input = require('fs')
-	.readFileSync('./temp.txt')
+	.readFileSync(inputName)
 	.toString('utf8')
 	.split('\n')
 	.map((l) => l.trim())
@@ -148,4 +150,26 @@ const main = () => {
 	}
 }
 
+const testHeap = () => {
+	const n = 1e5
+	const values = []
+	const h = []
+	for (let i = 0; i < n; ++i) {
+		const cost = (Math.random() * n * 2) | 0
+		values.push(cost)
+		heap_push(h, { cost })
+	}
+	const sorted = values
+		.slice()
+		.sort((a, b) => a - b)
+		.join(',')
+	const popped = []
+	while (h.length) {
+		popped.push(heap_pop(h))
+	}
+	const match = popped.map((item) => item.cost).join(',') === sorted
+	console.log(`Test result: ${match ? 'PASS' : 'FAIL'}`)
+}
+
+// testHeap()
 main()
