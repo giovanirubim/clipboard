@@ -72,13 +72,6 @@ const calcTurningCost = (prevDir, nextDir) => {
 const getCellKey = (row, col) => row * cols + col
 const getStateKey = (row, col, dir) => getCellKey(row, col) * 4 + dir
 const costFor = (stateKey) => costMap[stateKey] ?? Infinity
-const fromStateKey = (stateKey) => {
-	const dir = stateKey & 3
-	stateKey >>= 2
-	const col = stateKey % cols
-	const row = (stateKey / cols) | 0
-	return { row, col, dir }
-}
 
 const findStartEnd = () => {
 	let start = null,
