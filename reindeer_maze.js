@@ -1,8 +1,9 @@
 const cmp = (a, b) => a.cost - b.cost
 const Item = (row, col, dir, cost) => ({ row, col, dir, cost })
 
-const bubble_up = (h, i) => {
-	const item = h[i]
+const heapPush = (h, item) => {
+	let i = h.length
+	h.push(item)
 	while (i > 0) {
 		const p = (i - 1) >> 1
 		if (cmp(h[p], item) <= 0) break
@@ -12,35 +13,25 @@ const bubble_up = (h, i) => {
 	h[i] = item
 }
 
-const bubble_down = (h, i) => {
-	const { length: n } = h
-	const item = h[i]
-	for (;;) {
+const heapPop = (h) => {
+	const res = h[0]
+	if (h.length === 1) {
+		h.length = 0
+		return res
+	}
+	const item = h[h.length - 1]
+	h.length -= 1
+	let i = 0
+	for (const n = h.length; ; ) {
 		let c = (i << 1) | 1
 		if (c >= n) break
-		if (c + 1 < n && cmp(h[c + 1], h[c]) < 0) c += 1
+		if (c + 1 !== n && cmp(h[c], h[c + 1]) > 0) c += 1
 		if (cmp(h[c], item) >= 0) break
 		h[i] = h[c]
 		i = c
 	}
 	h[i] = item
-}
-
-const heap_push = (h, item) => {
-	h.push(item)
-	bubble_up(h, h.length - 1)
-}
-
-const heap_pop = (h) => {
-	const item = h[0]
-	if (h.length > 1) {
-		h[0] = h[h.length - 1]
-		h.length -= 1
-		bubble_down(h, 0)
-	} else {
-		h.length -= 1
-	}
-	return item
+	return res
 }
 
 const inputName = process.argv[2] ?? './input.txt'
@@ -91,15 +82,8 @@ const findStartEnd = () => {
 
 const dirs = [UP, RIGHT, DOWN, LEFT]
 
-const isValidCell = (row, col) => {
-	return (
-		row >= 0 &&
-		row < rows &&
-		col >= 0 &&
-		col < cols &&
-		input[row][col] !== WALL
-	)
-}
+const isValidCell = (row, col) =>
+	row >= 0 && row < rows && col >= 0 && col < cols && input[row][col] !== WALL
 
 const addNeighbor = (h, row, col, dir, cost) => {
 	if (!isValidCell(row, col)) return
@@ -107,7 +91,7 @@ const addNeighbor = (h, row, col, dir, cost) => {
 	const currentCost = costFor(key)
 	if (cost >= currentCost) return
 	costMap[key] = cost
-	heap_push(h, Item(row, col, dir, cost))
+	heapPush(h, Item(row, col, dir, cost))
 }
 
 const addBackwardNeighbors = (h, { row, col, dir, cost }) => {
@@ -115,20 +99,11 @@ const addBackwardNeighbors = (h, { row, col, dir, cost }) => {
 		if (prevDir === dir) continue
 		addNeighbor(h, row, col, prevDir, cost + calcTurningCost(prevDir, dir))
 	}
-	switch (dir) {
-		case UP:
-			addNeighbor(h, row + 1, col, UP, cost + 1)
-			break
-		case RIGHT:
-			addNeighbor(h, row, col - 1, RIGHT, cost + 1)
-			break
-		case DOWN:
-			addNeighbor(h, row - 1, col, DOWN, cost + 1)
-			break
-		case LEFT:
-			addNeighbor(h, row, col + 1, LEFT, cost + 1)
-			break
-	}
+	if (dir === UP) row += 1
+	if (dir === RIGHT) col -= 1
+	if (dir === DOWN) row -= 1
+	if (dir === LEFT) col += 1
+	addNeighbor(h, row, col, dir, cost + 1)
 }
 
 const getOptimalNeighbors = (row, col, dir) => {
@@ -140,9 +115,7 @@ const getOptimalNeighbors = (row, col, dir) => {
 			calcTurningCost(dir, nextDir) +
 			costFor(getStateKey(row, col, nextDir))
 		if (newCost > bestCost || newCost === Infinity) continue
-		if (newCost < bestCost) {
-			res.length = 0
-		}
+		if (newCost < bestCost) res.length = 0
 		res.push({ row, col, dir: nextDir })
 		bestCost = newCost
 	}
@@ -188,7 +161,7 @@ const main = () => {
 		costMap[getStateKey(row, col, dir)] = 0
 	}
 	while (h.length) {
-		const item = heap_pop(h)
+		const item = heapPop(h)
 		if (
 			item.row === start.row &&
 			item.col === start.col &&
@@ -202,26 +175,26 @@ const main = () => {
 	console.log('Number of optimal cells:', countOptimalCells(start))
 }
 
-const testHeap = () => {
-	const n = 1e5
-	const values = []
-	const h = []
-	for (let i = 0; i < n; ++i) {
-		const cost = (Math.random() * n * 2) | 0
-		values.push(cost)
-		heap_push(h, { cost })
-	}
-	const sorted = values
-		.slice()
-		.sort((a, b) => a - b)
-		.join(',')
-	const popped = []
-	while (h.length) {
-		popped.push(heap_pop(h))
-	}
-	const match = popped.map((item) => item.cost).join(',') === sorted
-	console.log(`Test result: ${match ? 'PASS' : 'FAIL'}`)
-}
-
-// testHeap()
 main()
+
+// const testHeap = () => {
+// 	const n = 1e5
+// 	const values = []
+// 	const h = []
+// 	for (let i = 0; i < n; ++i) {
+// 		const cost = (Math.random() * n * 2) | 0
+// 		values.push(cost)
+// 		heap_push(h, { cost })
+// 	}
+// 	const sorted = values
+// 		.slice()
+// 		.sort((a, b) => a - b)
+// 		.join(',')
+// 	const popped = []
+// 	while (h.length) {
+// 		popped.push(heap_pop(h))
+// 	}
+// 	const match = popped.map((item) => item.cost).join(',') === sorted
+// 	console.log(`Heap test: ${match ? 'PASS' : 'FAIL'}`)
+// }
+// testHeap()
