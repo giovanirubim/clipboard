@@ -153,12 +153,14 @@ const countOptimalCells = (start) => {
 }
 
 const main = () => {
+	const t0 = performance.now()
 	const { start, end } = findStartEnd()
 	const { row, col } = end
 	const h = dirs.map((dir) => Item(row, col, dir, 0))
 	for (const { row, col, dir } of h) {
 		costMap[getStateKey(row, col, dir)] = 0
 	}
+	let min_cost, optimal_count
 	while (h.length) {
 		const item = heapPop(h)
 		if (
@@ -166,12 +168,18 @@ const main = () => {
 			item.col === start.col &&
 			item.dir === RIGHT
 		) {
-			console.log('Minimum cost:', item.cost)
+			min_cost = item.cost
 			break
 		}
 		addBackwardNeighbors(h, item)
 	}
-	console.log('Number of optimal cells:', countOptimalCells(start))
+	const t1 = performance.now()
+	optimal_count = countOptimalCells(start)
+	const t2 = performance.now()
+	console.log('Minimum cost:', min_cost)
+	console.log('Number of optimal cells:', optimal_count)
+	console.log('Part 1 elapsed time:', t1 - t0, 'ms')
+	console.log('Part 2 elapsed time:', t2 - t1, 'ms')
 }
 
 main()
