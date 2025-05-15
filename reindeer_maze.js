@@ -64,13 +64,21 @@ const rows = input.length,
 	WALL = '#',
 	costMap = {}
 
-const calcTurningCost = (dir1, dir2) => {
-	const diff = Math.abs(dir1 - dir2)
+const calcTurningCost = (prevDir, nextDir) => {
+	const diff = Math.abs(nextDir - prevDir)
 	return (diff === 3 ? 1 : diff) * 1000
 }
 
-const stateKey = (row, col, dir) => (row * cols + col) * 4 + dir
+const getCellKey = (row, col) => row * cols + col
+const getStateKey = (row, col, dir) => getCellKey(row, col) * 4 + dir
 const costFor = (stateKey) => costMap[stateKey] ?? Infinity
+const fromStateKey = (stateKey) => {
+	const dir = stateKey & 3
+	stateKey >>= 2
+	const col = stateKey % cols
+	const row = (stateKey / cols) | 0
+	return { row, col, dir }
+}
 
 const findStartEnd = () => {
 	let start = null,
@@ -90,16 +98,26 @@ const findStartEnd = () => {
 
 const dirs = [UP, RIGHT, DOWN, LEFT]
 
+const isValidCell = (row, col) => {
+	return (
+		row >= 0 &&
+		row < rows &&
+		col >= 0 &&
+		col < cols &&
+		input[row][col] !== WALL
+	)
+}
+
 const addNeighbor = (h, row, col, dir, cost) => {
-	if (row < 0 || col < 0 || row === rows || col === cols) return
-	if (input[row][col] === WALL) return
-	const key = stateKey(row, col, dir)
-	if (cost >= costFor(key)) return
+	if (!isValidCell(row, col)) return
+	const key = getStateKey(row, col, dir)
+	const currentCost = costFor(key)
+	if (cost >= currentCost) return
 	costMap[key] = cost
 	heap_push(h, Item(row, col, dir, cost))
 }
 
-const addNeighbors = (h, { row, col, dir, cost }) => {
+const addBackwardNeighbors = (h, { row, col, dir, cost }) => {
 	for (const prevDir of dirs) {
 		if (prevDir === dir) continue
 		addNeighbor(h, row, col, prevDir, cost + calcTurningCost(prevDir, dir))
@@ -120,22 +138,75 @@ const addNeighbors = (h, { row, col, dir, cost }) => {
 	}
 }
 
+const getOptimalNeighbors = (row, col, dir) => {
+	let bestCost = Infinity
+	const res = []
+	for (const nextDir of dirs) {
+		if (nextDir === dir) continue
+		const newCost =
+			calcTurningCost(dir, nextDir) +
+			costFor(getStateKey(row, col, nextDir))
+		if (newCost > bestCost || newCost === Infinity) continue
+		if (newCost < bestCost) {
+			res.length = 0
+		}
+		res.push({ row, col, dir: nextDir })
+		bestCost = newCost
+	}
+	if (dir === UP) row -= 1
+	else if (dir === RIGHT) col += 1
+	else if (dir === DOWN) row += 1
+	else if (dir === LEFT) col -= 1
+	if (isValidCell(row, col)) {
+		const newCost = costFor(getStateKey(row, col, dir)) + 1
+		if (newCost < bestCost) res.length = 0
+		if (newCost <= bestCost) res.push({ row, col, dir })
+	}
+	return res
+}
+
+const countOptimalCells = (start) => {
+	const visitedStates = new Set()
+	const optimalCell = new Set()
+
+	const stack = [{ ...start, dir: RIGHT }]
+	optimalCell.add(getCellKey(start.row, start.col))
+
+	while (stack.length) {
+		const { row, col, dir } = stack.pop()
+		const neighbors = getOptimalNeighbors(row, col, dir)
+		for (const { row, col, dir } of neighbors) {
+			optimalCell.add(getCellKey(row, col))
+			const stateKey = getStateKey(row, col, dir)
+			if (visitedStates.has(stateKey)) continue
+			visitedStates.add(stateKey)
+			stack.push({ row, col, dir })
+		}
+	}
+
+	return optimalCell.size
+}
+
 const main = () => {
 	const { start, end } = findStartEnd()
 	const { row, col } = end
 	const h = dirs.map((dir) => Item(row, col, dir, 0))
+	for (const { row, col, dir } of h) {
+		costMap[getStateKey(row, col, dir)] = 0
+	}
 	while (h.length) {
 		const item = heap_pop(h)
 		if (
 			item.row === start.row &&
 			item.col === start.col &&
-			item.dir === LEFT
+			item.dir === RIGHT
 		) {
-			console.log(item.cost)
+			console.log('Minimum cost:', item.cost)
 			break
 		}
-		addNeighbors(h, item)
+		addBackwardNeighbors(h, item)
 	}
+	console.log('Number of optimal cells:', countOptimalCells(start))
 }
 
 const testHeap = () => {
