@@ -53,7 +53,8 @@ const rows = input.length,
 	START = 'S',
 	END = 'E',
 	WALL = '#',
-	costMap = {}
+	costMap = {},
+	dirs = [UP, RIGHT, DOWN, LEFT]
 
 const calcTurningCost = (prevDir, nextDir) => {
 	const diff = Math.abs(nextDir - prevDir)
@@ -79,8 +80,6 @@ const findStartEnd = () => {
 	}
 	return { start, end }
 }
-
-const dirs = [UP, RIGHT, DOWN, LEFT]
 
 const isValidCell = (row, col) =>
 	row >= 0 && row < rows && col >= 0 && col < cols && input[row][col] !== WALL
