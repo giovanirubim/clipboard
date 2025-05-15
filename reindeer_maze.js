@@ -183,7 +183,7 @@ main()
 // 	for (let i = 0; i < n; ++i) {
 // 		const cost = (Math.random() * n * 2) | 0
 // 		values.push(cost)
-// 		heap_push(h, { cost })
+// 		heapPush(h, { cost })
 // 	}
 // 	const sorted = values
 // 		.slice()
@@ -191,7 +191,7 @@ main()
 // 		.join(',')
 // 	const popped = []
 // 	while (h.length) {
-// 		popped.push(heap_pop(h))
+// 		popped.push(heapPop(h))
 // 	}
 // 	const match = popped.map((item) => item.cost).join(',') === sorted
 // 	console.log(`Heap test: ${match ? 'PASS' : 'FAIL'}`)
